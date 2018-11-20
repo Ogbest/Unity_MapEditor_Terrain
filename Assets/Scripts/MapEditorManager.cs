@@ -3,40 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
-public enum GridShapeType
-{
-    /// <summary>
-    /// 正方形
-    /// </summary>
-    Square,
-    /// <summary>
-    /// 正六边形
-    /// </summary>
-    RegularHexagon,
-}
 
 public class MapEditorManager : MonoBehaviour
 {
 
     public static MapEditorManager mIns;
-
-    /// <summary>
-    /// 地图宽
-    /// </summary>
-    public float mapWidth = 0;
-
-    /// <summary>
-    /// 地图长
-    /// </summary>
-    public float mapHeight = 0;
-
-    /// <summary>
-    /// 网格线是否显示
-    /// </summary>
-    public bool showGrid = true;
 
     /// <summary>
     /// 网格线宽度
@@ -64,14 +38,9 @@ public class MapEditorManager : MonoBehaviour
     public int meshPix = 2;
 
     /// <summary>
-    /// 当前高度判断，如果大于这个高度就是限制行走渔区
-    /// </summary>
-    public int reachHeight = 30;
-
-    /// <summary>
     /// 地图数据输出路径
     /// </summary>
-    public string exportPath;
+    private string exportPath;
 
     /// <summary>
     /// 当前地图地形
@@ -131,13 +100,18 @@ public class MapEditorManager : MonoBehaviour
     /// 当前地图块类型
     /// </summary>
     private int currentType = 0;
+
+    private Vector3 InitPos;
+
     private GameObject MeshParent;
 
     private void Awake()
     {
         mIns = this;
         MeshParent = new GameObject("MeshParents");
+
         exportPath = $"{ Application.dataPath}/MapDataExport/{ SceneManager.GetActiveScene().name}.txt";
+
     }
 
     private void Start()
@@ -154,6 +128,7 @@ public class MapEditorManager : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out hit))
             {
+                Vector3 temp = hit.point;
                 DrawMesh(hit.point, currentType);
             }
         }
@@ -226,11 +201,10 @@ public class MapEditorManager : MonoBehaviour
             Debug.LogError("linePix must be bigger than 1!");
             return;
         }
+        InitPos = m_terrian.transform.position;
+        m_terrian.transform.position = Vector3.zero;
 
         TerrainData data = m_terrian.terrainData;
-
-        mapWidth = data.size.x;
-        mapHeight = data.size.z;
 
         m_arrayRow = (int)(data.size.x / lineLength) * linePix + 1;
         m_arrayCol = (int)(data.size.z / lineLength) * linePix + 1;
@@ -303,12 +277,18 @@ public class MapEditorManager : MonoBehaviour
                     }
                     pos[linePix * 4] = pos[0];
                     CreateLine(i, j, pos);
+
                     Vector3 center = m_array[i * linePix + Mathf.CeilToInt(linePix / 2), j * linePix + Mathf.CeilToInt(linePix / 2)];
-                    DrawMesh(center, center.y > reachHeight ? 1 : 0);
+                    //这里默认是不可行走区域
+                    DrawMesh(center, 0);
                 }
             }
         }
-
+        MeshParent.transform.position = InitPos;
+    }
+    private async void ChangePos()
+    {
+        await Task.Delay(1000);
     }
     private void CreateLine(int row, int col, Vector3[] pos)
     {
@@ -332,6 +312,7 @@ public class MapEditorManager : MonoBehaviour
         }
 
         m_lines[row, col].name = "Line " + row + "_" + col;
+        m_lines[row, col].transform.SetParent(MeshParent.transform);
     }
     /// <summary>
     /// 渲染网格
@@ -339,28 +320,33 @@ public class MapEditorManager : MonoBehaviour
     /// <param name="pos"></param>
     private void DrawMesh(Vector3 pos, int gridType)
     {
-        int row = Mathf.FloorToInt(pos.z / lineLength);
-        int col = Mathf.FloorToInt(pos.x / lineLength);
+        int temp_z = Mathf.FloorToInt(pos.z / lineLength);
+        int temp_x = Mathf.FloorToInt(pos.x / lineLength);
+        temp_z = 99 - temp_z;
 
-        string key = row + "_" + col;
+        string key = temp_x + "_" + temp_z;
 
         if (m_meshs.ContainsKey(key))
         {
             m_meshs[key].SetActive(true);
-            m_gridInfos[row, col].gridType = gridType;
+            m_gridInfos[temp_x, temp_z].gridType = gridType;
             ShowGridColor(m_meshs[key], gridType);
         }
         else
         {
             Material material = new Material(Shader.Find("Standard"));
             GameObject m_mesh = new GameObject("m_mesh");
+
+            m_mesh.transform.SetParent(MeshParent.transform);
+
             m_mesh.AddComponent<MeshFilter>();
 
             MapGrid grid = new MapGrid(linePix, pos);
             Mesh mesh = grid.CreateMesh();
             //存格子数据
             GridInfo info = new GridInfo(gridType, pos);
-            m_gridInfos[row, col] = info;
+            m_gridInfos[temp_x, temp_z] = info;
+            m_mesh.name = "mesh_" + temp_x + ":" + temp_z;
             //存储网片数据
             m_meshs.Add(key, m_mesh);
             //将绘制好的Mesh赋值
@@ -415,11 +401,11 @@ public class MapEditorManager : MonoBehaviour
             BinaryWriter bw = new BinaryWriter(fs);
             bw.Write(rn);
             bw.Write(cn);
-            Debug.Log(rn + ":" + cn);
             for (int i = 0; i < rn; i++)
             {
                 for (int j = 0; j < cn; j++)
                 {
+                    //Debug.Log(i+":"+ j+":"+ m_gridInfos[i, j].centerPos);
                     // gridType 0-4  centerPos=Vector3
                     bw.Write((byte)m_gridInfos[i, j].gridType);
                     bw.Write((int)m_gridInfos[i, j].centerPos.x * 100);
