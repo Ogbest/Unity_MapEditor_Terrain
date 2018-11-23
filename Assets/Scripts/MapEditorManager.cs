@@ -13,34 +13,22 @@ public class MapEditorManager : MonoBehaviour
 
     public static MapEditorManager mIns;
 
-    /// <summary>
     /// 网格线宽度
-    /// </summary>
     public float lineWidth = 0.1f;
 
-    /// <summary>
     /// 网格线长度
-    /// </summary>
     public float lineLength = 10f;
 
-    /// <summary>
     /// 网格线颜色
-    /// </summary>
     public Color lineColor = Color.red;
 
-    /// <summary>
     /// 网格线的精度(一个边分为几段)
-    /// </summary>
     public int linePix = 4;
 
-    /// <summary>
     /// 网片精度（一个网片分为多少个子网片）
-    /// </summary>
     public int meshPix = 2;
 
-    /// <summary>
     /// 地图数据输出路径
-    /// </summary>
     private string exportPath;
 
     /// <summary>
@@ -48,9 +36,7 @@ public class MapEditorManager : MonoBehaviour
     /// </summary>
     public Terrain m_terrian;
 
-    /// <summary>
     /// 当前地图vector3数据
-    /// </summary>
     private Vector3[,] m_array;
     public Vector3[,] MArray
     {
@@ -59,9 +45,7 @@ public class MapEditorManager : MonoBehaviour
             return m_array;
         }
     }
-    /// <summary>
     /// m_array行数
-    /// </summary>
     private int m_arrayRow;
     public int ArrayRow
     {
@@ -70,9 +54,7 @@ public class MapEditorManager : MonoBehaviour
             return m_arrayRow;
         }
     }
-    /// <summary>
     /// m_array列数
-    /// </summary>
     private int m_arrayCol;
     public int ArrayCol
     {
@@ -82,24 +64,16 @@ public class MapEditorManager : MonoBehaviour
         }
     }
 
-    /// <summary>
     /// 存储的网格线
-    /// </summary>
     private GameObject[,] m_lines;
 
-    /// <summary>
     /// 存储的网格线
-    /// </summary>
     private Dictionary<string, GameObject> m_meshs = new Dictionary<string, GameObject>();
 
-    /// <summary>
     /// 存储的地图信息
-    /// </summary>
     private GridInfo[,] m_gridInfos;
 
-    /// <summary>
     /// 当前地图块类型
-    /// </summary>
     private int currentType = 0;
 
     private Vector3 m_terrainCenter;
@@ -293,28 +267,27 @@ public class MapEditorManager : MonoBehaviour
     }
     private void CreateLine(int row, int col, Vector3[] pos)
     {
-        //if (this.m_lines[row, col] != null)
-        //{
-        //    GameObject.Destroy(m_lines[row, col]);
-        //}
-        //this.m_lines[row, col] = new GameObject();
+        if (this.m_lines[row, col] != null)
+        {
+            GameObject.Destroy(m_lines[row, col]);
+        }
+        this.m_lines[row, col] = new GameObject();
 
-        //LineRenderer _lineRenderer = this.m_lines[row, col].AddComponent<LineRenderer>();
-        //_lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
-        //_lineRenderer.startColor = lineColor;
-        //_lineRenderer.endColor = lineColor;
-        //_lineRenderer.startWidth = lineWidth;
-        //_lineRenderer.endWidth = lineWidth;
-        //_lineRenderer.useWorldSpace = true;
-        //_lineRenderer.positionCount = pos.Length;
-        //for (int i = 0; i < pos.Length; ++i)
-        //{
-        //    pos[i] += InitPos;
-        //    _lineRenderer.SetPosition(i, pos[i]);
-        //}
+        LineRenderer _lineRenderer = this.m_lines[row, col].AddComponent<LineRenderer>();
+        _lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
+        _lineRenderer.startColor = lineColor;
+        _lineRenderer.endColor = lineColor;
+        _lineRenderer.startWidth = lineWidth;
+        _lineRenderer.endWidth = lineWidth;
+        _lineRenderer.useWorldSpace = true;
+        _lineRenderer.positionCount = pos.Length;
+        for (int i = 0; i < pos.Length; ++i)
+        {
+            _lineRenderer.SetPosition(i, pos[i]);
+        }
 
-        //m_lines[row, col].name = "Line " + row + "_" + col;
-        //m_lines[row, col].transform.SetParent(MeshParent.transform);
+        m_lines[row, col].name = "Line " + row + "_" + col;
+        m_lines[row, col].transform.SetParent(m_parents.transform);
     }
     /// <summary>
     /// 渲染网格

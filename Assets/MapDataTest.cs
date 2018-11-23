@@ -39,7 +39,7 @@ public class MapDataTest : MonoBehaviour
         int row = Mathf.Abs((int)(position.x));
         int col = Mathf.Abs((int)(position.z - 0.5f));
         Debug.Log(row + ":" + col + ":" + position);
-
+        Debug.Log($"当前位置类型:{m_gridInfos[row, col].gridType}");
         return m_gridInfos[row, col].gridType;
     }
     public bool LoadMapData()

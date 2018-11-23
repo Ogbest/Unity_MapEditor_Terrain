@@ -737,7 +737,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a081ff93c1bcc754cab638b35ddd083d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lineWidth: 1
+  lineWidth: 0.05
   lineLength: 1
   lineColor: {r: 1, g: 0, b: 0, a: 1}
   linePix: 1
