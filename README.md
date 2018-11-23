@@ -12,4 +12,4 @@
 5:地形的位置必须是能整除2的整数
 
 
-![](https://github.com/Ogbest/Unity_MapEditor_Terrain/blob/master/texure.jpg)
+![](https://github.com/Ogbest/Unity_MapEditor_Terrain/blob/master/texure.png)
