@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public class MapEditorManager : MonoBehaviour
@@ -101,14 +102,14 @@ public class MapEditorManager : MonoBehaviour
     /// </summary>
     private int currentType = 0;
 
-    private Vector3 InitPos;
+    private Vector3 m_terrainCenter;
 
-    private GameObject MeshParent;
+    private GameObject m_parents;
 
     private void Awake()
     {
         mIns = this;
-        MeshParent = new GameObject("MeshParents");
+        m_parents = new GameObject("MeshParents");
 
         exportPath = $"{ Application.dataPath}/MapDataExport/{ SceneManager.GetActiveScene().name}.txt";
 
@@ -122,7 +123,7 @@ public class MapEditorManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -201,7 +202,7 @@ public class MapEditorManager : MonoBehaviour
             Debug.LogError("linePix must be bigger than 1!");
             return;
         }
-        InitPos = m_terrian.transform.position;
+        m_terrainCenter = m_terrian.transform.position;
         m_terrian.transform.position = Vector3.zero;
 
         TerrainData data = m_terrian.terrainData;
@@ -284,7 +285,7 @@ public class MapEditorManager : MonoBehaviour
                 }
             }
         }
-        MeshParent.transform.position = InitPos;
+        //m_parents.transform.position = m_terrainCenter;
     }
     private async void ChangePos()
     {
@@ -292,27 +293,28 @@ public class MapEditorManager : MonoBehaviour
     }
     private void CreateLine(int row, int col, Vector3[] pos)
     {
-        if (this.m_lines[row, col] != null)
-        {
-            GameObject.Destroy(m_lines[row, col]);
-        }
-        this.m_lines[row, col] = new GameObject();
+        //if (this.m_lines[row, col] != null)
+        //{
+        //    GameObject.Destroy(m_lines[row, col]);
+        //}
+        //this.m_lines[row, col] = new GameObject();
 
-        LineRenderer _lineRenderer = this.m_lines[row, col].AddComponent<LineRenderer>();
-        _lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
-        _lineRenderer.startColor = lineColor;
-        _lineRenderer.endColor = lineColor;
-        _lineRenderer.startWidth = lineWidth;
-        _lineRenderer.endWidth = lineWidth;
-        _lineRenderer.useWorldSpace = true;
-        _lineRenderer.positionCount = pos.Length;
-        for (int i = 0; i < pos.Length; ++i)
-        {
-            _lineRenderer.SetPosition(i, pos[i]);
-        }
+        //LineRenderer _lineRenderer = this.m_lines[row, col].AddComponent<LineRenderer>();
+        //_lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
+        //_lineRenderer.startColor = lineColor;
+        //_lineRenderer.endColor = lineColor;
+        //_lineRenderer.startWidth = lineWidth;
+        //_lineRenderer.endWidth = lineWidth;
+        //_lineRenderer.useWorldSpace = true;
+        //_lineRenderer.positionCount = pos.Length;
+        //for (int i = 0; i < pos.Length; ++i)
+        //{
+        //    pos[i] += InitPos;
+        //    _lineRenderer.SetPosition(i, pos[i]);
+        //}
 
-        m_lines[row, col].name = "Line " + row + "_" + col;
-        m_lines[row, col].transform.SetParent(MeshParent.transform);
+        //m_lines[row, col].name = "Line " + row + "_" + col;
+        //m_lines[row, col].transform.SetParent(MeshParent.transform);
     }
     /// <summary>
     /// 渲染网格
@@ -337,7 +339,7 @@ public class MapEditorManager : MonoBehaviour
             Material material = new Material(Shader.Find("Standard"));
             GameObject m_mesh = new GameObject("m_mesh");
 
-            m_mesh.transform.SetParent(MeshParent.transform);
+            m_mesh.transform.SetParent(m_parents.transform);
 
             m_mesh.AddComponent<MeshFilter>();
 
@@ -399,8 +401,15 @@ public class MapEditorManager : MonoBehaviour
             FileStream fs = new FileStream(exportPath, FileMode.Create);
             fs.Seek(0, SeekOrigin.Current);
             BinaryWriter bw = new BinaryWriter(fs);
+            //写入地图行列
             bw.Write(rn);
             bw.Write(cn);
+            //写入地图中心点插值
+            bw.Write((byte)10);
+            bw.Write((int)m_terrainCenter.x);
+            bw.Write((int)m_terrainCenter.y);
+            bw.Write((int)m_terrainCenter.z);
+            //写入地图数据
             for (int i = 0; i < rn; i++)
             {
                 for (int j = 0; j < cn; j++)
@@ -434,11 +443,15 @@ public class MapEditorManager : MonoBehaviour
             {
                 FileStream fs = new FileStream(exportPath, FileMode.OpenOrCreate);
                 BinaryReader br = new BinaryReader(fs);
+                //读取行列
                 int row_count = br.ReadInt32();
                 int col_count = br.ReadInt32();
-                Debug.Log(row_count + ":" + col_count);
+                //读取中心点做插值
+                if (br.ReadByte() != 10) Debug.LogError("读取地图错误");
+                m_terrainCenter.x = br.ReadInt32();
+                m_terrainCenter.y = br.ReadInt32();
+                m_terrainCenter.z = br.ReadInt32();
                 m_gridInfos = new GridInfo[row_count, col_count];
-
                 for (int r = 0; r < row_count; r++)
                 {
                     for (int c = 0; c < col_count; c++)

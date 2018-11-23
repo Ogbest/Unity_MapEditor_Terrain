@@ -9,11 +9,6 @@ using DG.Tweening;
 public class CameraController : MonoBehaviour
 {
 
-    void Start()
-    {
-
-    }
-
     void LateUpdate()
     {
         if (Input.GetMouseButton(1))

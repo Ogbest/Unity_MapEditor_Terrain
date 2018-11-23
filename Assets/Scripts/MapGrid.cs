@@ -48,7 +48,7 @@ public class MapGrid{
         this._col = Mathf.FloorToInt(pos.x / MapEditorManager.mIns.lineLength);
     }
 
-    public Mesh CreateMesh()
+    public Mesh CreateMesh( )
     {
         CaculateVertexes();
         CaculateTriangles();
@@ -68,7 +68,7 @@ public class MapGrid{
         return _mesh;
     }
 
-    private void CaculateVertexes()
+    private void CaculateVertexes( )
     {
         KeyValuePair<int, int> info = new KeyValuePair<int, int>(_row, _col);
 
@@ -85,12 +85,13 @@ public class MapGrid{
         {
             for (int j = 0; j < this._coefficient; ++j)
             {
-                this._vertexes[index++] = MapEditorManager.mIns.MArray[info.Key * (this._coefficient - 1) + i, info.Value * (this._coefficient - 1) + j] - new Vector3(0, 0.1f, 0);
+                int t = index++;
+                this._vertexes[t] = MapEditorManager.mIns.MArray[info.Key * (this._coefficient - 1) + i, info.Value * (this._coefficient - 1) + j] - new Vector3(0, 0.1f, 0);
             }
         }
     }
 
-    private void CaculateTriangles()
+    private void CaculateTriangles( )
     {
         int sum = Mathf.FloorToInt(this._segment.x * this._segment.y * 6);
         this._triangles = new int[sum];
